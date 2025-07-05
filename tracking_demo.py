@@ -4,6 +4,7 @@ from ultralytics.engine.results import Results
 import cv2
 import torch
 
+from consolidator import Consolidator
 from embedding_aggregator import EmbeddingAggregator
 from image_saver import ImageSaver
 from scheduler import Scheduler
@@ -12,12 +13,15 @@ from util import get_logger
 import argparse
 
 parser = argparse.ArgumentParser(description='YOLO tracking demo with embedding aggregation')
+# Value arguments
 parser.add_argument('--source', type=str, default="store.mp4", help='Source video file path')
-parser.add_argument('--preview', action='store_true', help='Show preview window')
-parser.add_argument('--save-video', action='store_true', help='Save output video')
 parser.add_argument('--skip-frames', type=int, default=5, help='Number of frames to skip')
 parser.add_argument('--output-path', type=str, default="output/results", help='Output directory path')
+# Boolean arguments
+parser.add_argument('--preview', action='store_true', help='Show preview window')
+parser.add_argument('--save-video', action='store_true', help='Save output video')
 parser.add_argument('--save-images', action='store_true', help='Save images')
+parser.add_argument('--skip-consolidation', action='store_true', help='Skip consolidation')
 
 args = parser.parse_args()
 SOURCE = args.source
@@ -26,6 +30,7 @@ SHOULD_SAVE_VIDEO = args.save_video
 SKIP_FRAMES = args.skip_frames
 OUTPUT_PATH = args.output_path
 SHOULD_SAVE_IMAGES = args.save_images
+SHOULD_CONSOLIDATE = not args.skip_consolidation
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
@@ -75,3 +80,7 @@ finally:
     scheduler.cleanup()
     cv2.destroyAllWindows()
     logger.info(f"Took {end_time-start_time:.4f} seconds")
+
+if SHOULD_CONSOLIDATE:
+    consolidator = Consolidator(scheduler.save_path)
+    consolidator.consolidate(rearrange=True, visualize=True)
