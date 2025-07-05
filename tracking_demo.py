@@ -2,14 +2,18 @@ import time
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 import cv2
+import torch
 
 from embedding_aggregator import EmbeddingAggregator
 from image_saver import ImageSaver
 from scheduler import Scheduler
 from util import get_logger
 
-classification_model = YOLO(".yolo/models/yolo11n-cls.pt")
-model = YOLO(".yolo/models/yolo11n.pt")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
+
+classification_model = YOLO(".yolo/models/yolo11n-cls.pt").to(device)
+model = YOLO(".yolo/models/yolo11n.pt").to(device)
 layer_indices = [2, 4, 6, 8, 9]
 
 
