@@ -9,6 +9,24 @@ from image_saver import ImageSaver
 from scheduler import Scheduler
 from util import get_logger
 
+import argparse
+
+parser = argparse.ArgumentParser(description='YOLO tracking demo with embedding aggregation')
+parser.add_argument('--source', type=str, default="store.mp4", help='Source video file path')
+parser.add_argument('--preview', action='store_true', help='Show preview window')
+parser.add_argument('--save-video', action='store_true', help='Save output video')
+parser.add_argument('--skip-frames', type=int, default=5, help='Number of frames to skip')
+parser.add_argument('--output-path', type=str, default="output/results", help='Output directory path')
+parser.add_argument('--save-images', action='store_true', help='Save images')
+
+args = parser.parse_args()
+SOURCE = args.source
+SHOULD_PREVIEW = args.preview
+SHOULD_SAVE_VIDEO = args.save_video
+SKIP_FRAMES = args.skip_frames
+OUTPUT_PATH = args.output_path
+SHOULD_SAVE_IMAGES = args.save_images
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
@@ -16,19 +34,12 @@ classification_model = YOLO(".yolo/models/yolo11n-cls.pt").to(device)
 model = YOLO(".yolo/models/yolo11n.pt").to(device)
 layer_indices = [2, 4, 6, 8, 9]
 
-
-SOURCE = "store.mp4"
-SHOULD_PREVIEW = False
-SHOULD_SAVE_VIDEO = False
-SKIP_FRAMES = 5
-OUTPUT_PATH = "output/results"
-
 scheduler = Scheduler(
     save_path=OUTPUT_PATH,
     skip_frames=SKIP_FRAMES,
 )\
+    | (ImageSaver() if SHOULD_SAVE_IMAGES else None)\
     | EmbeddingAggregator(classification_model, layer_indices, batch_size=50)\
-    # | ImageSaver()\
 
 
 logger = get_logger(__name__, f"{scheduler.save_path}/logs")

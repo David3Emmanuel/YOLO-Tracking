@@ -70,7 +70,9 @@ class Scheduler:
         return _save_path
     
     
-    def __or__(self, pipe: Scheduled):
+    def __or__(self, pipe: Scheduled | None):
+        if pipe is None:
+            return self
         self.pipes.append(pipe)
         pipe.set_scheduler(self)
         return self
