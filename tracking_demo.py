@@ -40,7 +40,7 @@ logger.info(f"\n{scheduler}")
 try:
     results: list[Results] = model.track(
         source=SOURCE, stream=True, verbose=False,
-        persist=True, tracker=".yolo/trackers/botsort_with_reid.yaml",
+        persist=True, tracker="trackers/botsort_with_reid.yaml",
         save=SHOULD_SAVE_VIDEO, project="output",
     )
     start_time = time.perf_counter()
