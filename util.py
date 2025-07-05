@@ -43,3 +43,12 @@ def get_detection(result: Results, box: Boxes):
     class_id = int(box.cls.item())
     class_name = result.names[class_id]
     return class_id, class_name
+
+def get_unique_path(save_path: str):
+    i = 2
+    _save_path = save_path
+    while os.path.exists(_save_path):
+        _save_path = f"{save_path}_{i}"
+        i += 1
+    os.makedirs(_save_path, exist_ok=True)
+    return _save_path

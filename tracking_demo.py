@@ -8,7 +8,7 @@ from consolidator import Consolidator
 from embedding_aggregator import EmbeddingAggregator
 from image_saver import ImageSaver
 from scheduler import Scheduler
-from util import get_logger
+from util import get_logger, get_unique_path
 
 import argparse
 
@@ -28,7 +28,7 @@ SOURCE = args.source
 SHOULD_PREVIEW = args.preview
 SHOULD_SAVE_VIDEO = args.save_video
 SKIP_FRAMES = args.skip_frames
-OUTPUT_PATH = args.output_path
+OUTPUT_PATH = get_unique_path(args.output_path)
 SHOULD_SAVE_IMAGES = args.save_images
 SHOULD_CONSOLIDATE = not args.skip_consolidation
 
@@ -39,9 +39,14 @@ classification_model = YOLO(".yolo/models/yolo11n-cls.pt").to(device)
 model = YOLO(".yolo/models/yolo11n.pt").to(device)
 layer_indices = [2, 4, 6, 8, 9]
 
+# Instantiate and start the consolidator thread before the scheduler
+consolidator = Consolidator(OUTPUT_PATH)
+consolidator.start()
+
 scheduler = Scheduler(
     save_path=OUTPUT_PATH,
     skip_frames=SKIP_FRAMES,
+    consolidator=consolidator,
 )\
     | (ImageSaver() if SHOULD_SAVE_IMAGES else None)\
     | EmbeddingAggregator(classification_model, layer_indices, batch_size=50)\
@@ -57,7 +62,7 @@ try:
     results: list[Results] = model.track(
         source=SOURCE, stream=True, verbose=False,
         persist=True, tracker="trackers/botsort_with_reid.yaml",
-        save=SHOULD_SAVE_VIDEO, project="output",
+        save=SHOULD_SAVE_VIDEO, project=OUTPUT_PATH,
     )
     start_time = time.perf_counter()
 
@@ -80,7 +85,5 @@ finally:
     scheduler.cleanup()
     cv2.destroyAllWindows()
     logger.info(f"Took {end_time-start_time:.4f} seconds")
-
-if SHOULD_CONSOLIDATE:
-    consolidator = Consolidator(scheduler.save_path)
-    consolidator.consolidate(rearrange=True, visualize=True)
+    consolidator.stop()
+    consolidator.join()

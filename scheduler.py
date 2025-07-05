@@ -6,16 +6,18 @@ from ultralytics.engine.results import Results
 
 from util import get_detection, get_logger
 from scheduled import Scheduled
+from consolidator import Consolidator
 
 class Scheduler:
-    def __init__(self, skip_frames: int, save_path: str):
-        self.save_path = self._get_unique_path(save_path)
+    def __init__(self, skip_frames: int, save_path: str, consolidator: Consolidator|None=None):
+        self.save_path = save_path
         self.logger = get_logger(self.__class__.__name__, f"{self.save_path}/logs")
         self.logger.info(f"Storing output in {self.save_path}")
         
         self.skip_frames = skip_frames
         self.to_skip = 0
         self.pipes: list[Scheduled] = []
+        self.consolidator = consolidator
         
         self.schedule_queue = queue.Queue()
         self.thread = threading.Thread(target=self.schedule_worker, daemon=True)
@@ -43,7 +45,11 @@ class Scheduler:
                     if not box.id:
                         self.logger.warning(f"Box of class {class_name} has no ID")
                         continue
-                    box_id = int(box.id.item())
+                    _box_id = int(box.id.item())
+                    if self.consolidator is not None:
+                        box_id = self.consolidator.get_representative_id(class_name, _box_id)
+                    else:
+                        box_id = _box_id
                     self.logger.debug(f"Handling box {box_id} of class {class_name}")
                     full_id = f"{class_name}#{box_id}"
                     object_path = f"{self.save_path}/{full_id}"
@@ -59,15 +65,6 @@ class Scheduler:
                 self.schedule_queue.task_done()
                 end_time = time.perf_counter()
                 self.logger.debug(f"Took {end_time-start_time:.4f} seconds")
-    
-    def _get_unique_path(self, save_path: str):
-        i = 2
-        _save_path = save_path
-        while os.path.exists(_save_path):
-            _save_path = f"{save_path}_{i}"
-            i += 1
-        os.makedirs(_save_path, exist_ok=True)
-        return _save_path
     
     
     def __or__(self, pipe: Scheduled | None):

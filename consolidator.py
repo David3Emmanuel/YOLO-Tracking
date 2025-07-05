@@ -6,17 +6,43 @@ import torch
 import torch.nn.functional as F
 from collections import defaultdict
 import matplotlib.pyplot as plt
+import threading
 
-class Consolidator:
-    def __init__(self, embeddings_root: str, similarity_threshold: float = 0.9):
+class Consolidator(threading.Thread):
+    def __init__(self, embeddings_root: str, similarity_threshold: float = 0.9, interval: float = 30.0):
+        super().__init__(daemon=True)
         self.embeddings_root = embeddings_root
         self.similarity_threshold = similarity_threshold
         self.consolidation_results = {}
         self.logger = get_logger(self.__class__.__name__, f"{self.embeddings_root}/logs")
+        self.interval = interval
+        self._stop_event = threading.Event()
     
     def get_representative_id(self, class_name, object_id):
-        return self.consolidation_results[class_name][object_id]
+        if class_name not in self.consolidation_results:
+            self.logger.warning(f"Class {class_name} not found in consolidation results")
+            return object_id
+        
+        class_results = self.consolidation_results[class_name]
+        if object_id not in class_results:
+            self.logger.warning(f"Object {object_id} not found in consolidation results for class {class_name}")
+            return object_id
+        
+        return class_results[object_id]
     
+    def run(self):
+        self.logger.info(f"Consolidator thread started, consolidating every {self.interval} seconds.")
+        while not self._stop_event.is_set():
+            try:
+                self.consolidate(rearrange=True, visualize=False)
+            except Exception as e:
+                self.logger.error(f"Error during consolidation: {e}")
+            self._stop_event.wait(self.interval)
+        self.logger.info("Consolidator thread stopped.")
+
+    def stop(self):
+        self._stop_event.set()
+
     def _rearrange_files(self):
         for class_name, results in self.consolidation_results.items():
             for object_id, representative_id in results.items():
