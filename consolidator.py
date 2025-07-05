@@ -58,7 +58,7 @@ class Consolidator:
                 self.visualize_similarity(class_name, sim_matrix, object_ids)
             results = self._consolidate_class(object_ids, sim_matrix)
             self.consolidation_results[class_name] = results
-            self.logger.info(f"Consolidated {class_name} with {len(results)} objects")
+            self.logger.debug(f"Consolidated {class_name} with {len(results)} objects")
         if rearrange:
             self._rearrange_files()
         end_time = time.perf_counter()
@@ -88,7 +88,7 @@ class Consolidator:
             emb = torch.load(file_path, map_location=device)
             embeddings.append(emb)
             object_ids.append(object_id)
-        self.logger.info(f"Loaded {len(embeddings)} embeddings for {len(object_ids)} objects")
+        self.logger.debug(f"Loaded {len(embeddings)} embeddings for {len(object_ids)} objects")
         return embeddings, object_ids
     
     def _compute_similarity(self, embeddings):
