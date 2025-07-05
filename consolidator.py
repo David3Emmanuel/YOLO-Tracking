@@ -65,8 +65,8 @@ class Consolidator:
         if not visualize:
             self.logger.info(f"Took {end_time-start_time:.4f} seconds")
 
-    def visualize_similarity(self, class_name, sim_matrix, object_ids):
-        sim_matrix = sim_matrix.clone()
+    def visualize_similarity(self, class_name, sim_matrix: torch.Tensor, object_ids: list[int]):
+        sim_matrix = sim_matrix.clone().cpu()
         sim_matrix = torch.triu(sim_matrix)
         
         cmap = plt.get_cmap('viridis')
@@ -74,8 +74,8 @@ class Consolidator:
         plt.title(f"Similarity Matrix for {class_name}")
         
         plt.imshow(sim_matrix, cmap=cmap, vmin=0.5, vmax=1)
-        plt.xticks(range(len(object_ids)), object_ids, rotation=90)
-        plt.yticks(range(len(object_ids)), object_ids)
+        plt.xticks(range(len(object_ids)), [str(id) for id in object_ids], rotation=90)
+        plt.yticks(range(len(object_ids)), [str(id) for id in object_ids])
         plt.colorbar()
         plt.savefig(f"{self.embeddings_root}/similarity_matrix_{class_name}.png")
         plt.close()
