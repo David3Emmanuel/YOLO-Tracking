@@ -19,6 +19,8 @@ class Consolidator(threading.Thread):
         self._stop_event = threading.Event()
     
     def get_representative_id(self, class_name, object_id):
+        if not self.consolidation_results: return object_id
+        
         if class_name not in self.consolidation_results:
             self.logger.warning(f"Class {class_name} not found in consolidation results")
             return object_id
@@ -136,6 +138,10 @@ class Consolidator(threading.Thread):
             id: min(group)
             for id, group in groups.items()
         }
+    
+    def cleanup(self):
+        self.stop()
+        self.join()
     
 if __name__ == "__main__":
     consolidator = Consolidator("output/results")

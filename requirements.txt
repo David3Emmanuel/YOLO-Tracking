@@ -1,11 +1,8 @@
 backports.tarfile==1.2.0
 filetype==1.2.0
-importlib-metadata==8.0.0
-jaraco.collections==5.1.0
 lap==0.5.12
 pillow-avif-plugin==1.5.2
 pillow-heif==1.0.0
-platformdirs==4.2.2
 python-dotenv==1.1.1
 pytubefix==9.2.2
 requests-toolbelt==1.0.0
