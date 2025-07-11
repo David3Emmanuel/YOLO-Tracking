@@ -12,7 +12,7 @@ from util import get_logger, get_unique_path
 
 
 class YoloTracker:
-    def __init__(self, source, skip_frames, output_path, preview, save_video, save_images, skip_consolidation):
+    def __init__(self, source, skip_frames, output_path, preview, save_video, save_images, skip_consolidation, only_person):
         self.SOURCE = source
         self.SHOULD_PREVIEW = preview
         self.SHOULD_SAVE_VIDEO = save_video
@@ -20,6 +20,7 @@ class YoloTracker:
         self.OUTPUT_PATH = get_unique_path(output_path)
         self.SHOULD_SAVE_IMAGES = save_images
         self.SHOULD_CONSOLIDATE = not skip_consolidation
+        self.ONLY_PERSON = only_person
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
@@ -53,6 +54,8 @@ class YoloTracker:
             source=self.SOURCE, stream=True, verbose=False,
             persist=True, tracker="trackers/botsort_with_reid.yaml",
             save=self.SHOULD_SAVE_VIDEO, project=self.OUTPUT_PATH,
+            classes = [0] if self.ONLY_PERSON else None,
+            conf=0.75 if self.ONLY_PERSON else None
         )
         self._start_time = time.perf_counter()
         start_detection_time = time.perf_counter()
