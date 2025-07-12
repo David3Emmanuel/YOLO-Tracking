@@ -12,7 +12,7 @@ from util import get_logger, get_unique_path
 
 
 class YoloTracker:
-    def __init__(self, source, skip_frames, output_path, preview, save_video, save_images, skip_consolidation, only_person):
+    def __init__(self, source, skip_frames, output_path, preview, save_video, save_images, skip_consolidation, only_person, use_beta):
         self.SOURCE = source
         self.SHOULD_PREVIEW = preview
         self.SHOULD_SAVE_VIDEO = save_video
@@ -25,9 +25,15 @@ class YoloTracker:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
 
-        self.classification_model = YOLO(".yolo/models/yolo11n-cls.pt").to(self.device)
-        self.model = YOLO(".yolo/models/yolo11n.pt").to(self.device)
-        self.layer_indices = [2, 4, 6, 8, 9]
+        if use_beta:
+            self.classification_model = YOLO(".yolo/models/yolo11n-cls.pt").to(self.device)
+            self.model = YOLO(".yolo/models/yolo11n.pt").to(self.device)
+            self.layer_indices = [2, 4, 6, 8, 9]
+        else:
+            self.classification_model = YOLO(".yolo/models/yolov8n-cls.pt").to(self.device)
+            self.model = YOLO(".yolo/models/yolov8n.pt").to(self.device)
+            self.layer_indices = [2, 4, 6, 8]
+
 
         # Instantiate and start the consolidator thread before the scheduler
         self.consolidator = Consolidator(self.OUTPUT_PATH)

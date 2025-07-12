@@ -12,7 +12,8 @@ if __name__ == "__main__":
     parser.add_argument('--save-images', action='store_true', help='Save images')
     parser.add_argument('--skip-consolidation', action='store_true', help='Skip consolidation')
     parser.add_argument('--only-person', action='store_true', help='Only track people')
-    
+    parser.add_argument('--use-beta', action='store_true', help='Use a newer model')
+
     args = parser.parse_args()
     
     tracker = YoloTracker(
@@ -23,7 +24,8 @@ if __name__ == "__main__":
         save_video=args.save_video,
         save_images=args.save_images,
         skip_consolidation=args.skip_consolidation,
-        only_person=args.only_person
+        only_person=args.only_person,
+        use_beta=args.use_beta
     )
     try:
         tracker.run()
